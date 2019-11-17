@@ -1,5 +1,8 @@
 import java.io.IOException;
 
+/**
+ * 本类仅用于本地测试重复运行
+ */
 public class Myclass {
 
 	public static void main(String[] args) {

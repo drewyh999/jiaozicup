@@ -30,7 +30,7 @@ public class Action {
 					RouteServer.addChannelNum();
 					System.out.println("现在已连接节点数为："+RouteServer.getChannelNum());
 					return;
-				}else if(RouteServer.accessibleNodeTable.get(message.sysMessage.target).delay>Const.ACCESSIBLE_NODE_DELAY_MIN){
+				}else if(RouteServer.accessibleNodeTable.get(message.sysMessage.target).delay > Const.ACCESSIBLE_NODE_DELAY_MIN){
 					applyChannel(message.sysMessage.target);
 					MyChannel channel=new MyChannel(message.sysMessage.target);
 					channel.setChannelState(Const.CHANNEL_STATE_REQUEST);
@@ -110,17 +110,18 @@ public class Action {
 								//channel.isActive=true;
 									switch (channel.getChannelState()) {//根据管道的状态分别执行不同的操作
 									case Const.CHANNEL_STATE_REQUEST:
-										
+										//如果是REQUEST状态则直接跳过
 										break;
 									case Const.CHANNEL_STATE_REFUSE:
+										//如果是通道被拒接了，那么我们尝试再申请一次
 										applyChannel(message.sysMessage.target);
 										channel.firstRufuse=false;
 										channel.setChannelState(Const.CHANNEL_STATE_REQUEST);
 										RouteServer.addChannelNum();
 										System.out.println("现在已连接节点数为："+RouteServer.getChannelNum());
-										//channel.isActive=true;
 										break;
 									case Const.CHANNEL_STATE_SUCCESS:
+										//如果通道建立成功了，我们发送消息
 										channel.doSend(message);
 										isBuild=true;
 										requestTimeout=0;
@@ -189,16 +190,14 @@ public class Action {
 		AccessibleNode node=new AccessibleNode();
 		node.target=message.sysMessage.target;
 		node.throughNode=-1;
+		//判断通道类型
 		if(message.channelType==Const.CHANNEL_TYPE_FAST) {
 			node.delay=Main.config.channelConfig.highSpeed.lag;
 		}else {
 			node.delay=Main.config.channelConfig.normalSpeed.lag;
 		}
 		RouteServer.accessibleNodeTable.put(node.target, node);
-		//增加已连接通道数
-		//RouteServer.addChannelNum();
-		//System.out.println("现在已连接节点数为："+RouteServer.getChannelNum());
-		//广播通道更新消息
+
 		sendChangeAccessibleTable();
 	}
 	/**
@@ -206,23 +205,6 @@ public class Action {
 	 * @param message
 	 */
 	synchronized public static void onBuildRequest(Message message) {//管道申请响应应该考虑如何关闭自身的管道
-		//应解决如何关闭自身的管道来解决与想要连接的对方的连接
-		/*if(RouteServer.getChannelNum()>=Main.config.maxChannelConn) {
-			Map<Integer, MyChannel>channelTable=RouteServer.adjacentNodeTable;
-			Set<Integer>set=channelTable.keySet();
-			for(Integer i:set) {
-				if(channelTable.get(i).getChannelState()==Const.CHANNEL_STATE_SUCCESS) {
-					
-					if((channelTable.get(i).getTimeout()-Const.CHANNEL_TIME_BEKILLED)<Main.curTime()) {
-						channelTable.get(i).setTimeout(-1);
-						channelTable.get(i).setChannelState(Const.CHANNEL_STATE_BEKILLED);
-					}
-				}
-			}
-			RouteServer.sendChannelBuild(message.sysMessage.target, Const.STATE_REFUSE,
-                    Const.ERR_CODE_CHANNEL_BUILD_TARGET_REFUSE, message.channelType);
-			return ;
-		}*/
 		
 		MyChannel channel;
 		if((channel=RouteServer.adjacentNodeTable.get(message.sysMessage.target))==null) {//判断该条通道是否在创建中或者创建成功
